@@ -73,14 +73,7 @@ func main() {
 		keys = append(keys, key)
 	}
 
-	for i := 0; i < len(keys); i++ {
-		for j := i + 1; j < len(keys); j++ {
-			if keys[j] < keys[i] {
-				keys[i], keys[j] = keys[j], keys[i]
-			}
-		}
-	}
-
+	// numeric bubble sort starts here
 	parseDecimalToInt := func(s string) (int, error) {
 		if s == "" {
 			return 0, fmt.Errorf("empty string")
@@ -104,6 +97,26 @@ func main() {
 		}
 		return sign * res, nil
 	}
+
+	keyInts := make([]int, len(keys))
+	for i, ks := range keys {
+		v, err := parseDecimalToInt(ks)
+		if err != nil {
+			keyInts[i] = 0
+		} else {
+			keyInts[i] = v
+		}
+	}
+	for i := 0; i < len(keys); i++ {
+		for j := i + 1; j < len(keys); j++ {
+			if keyInts[j] < keyInts[i] {
+				keyInts[i], keyInts[j] = keyInts[j], keyInts[i]
+				keys[i], keys[j] = keys[j], keys[i]
+			}
+		}
+	}
+	// numeric bubble sort ends here
+
 	convertValueToBig := func(value string, base int) (*big.Int, error) {
 		v := strings.TrimSpace(value)
 		if v == "" {
@@ -151,15 +164,18 @@ func main() {
 		base, perr := parseDecimalToInt(strings.TrimSpace(entry.Base))
 		if perr != nil {
 			problems = append(problems, fmt.Sprintf("Entry key %q has invalid base %q: %v", key, entry.Base, perr))
+			convertedRoots = append(convertedRoots, big.NewInt(0)) // 👈 put zero instead of skipping
 			continue
 		}
 		if base < 2 || base > 16 {
 			problems = append(problems, fmt.Sprintf("Entry key %q has unsupported base %d (allowed 2..16).", key, base))
+			convertedRoots = append(convertedRoots, big.NewInt(0)) // 👈 put zero instead of skipping
 			continue
 		}
 		valBig, verr := convertValueToBig(entry.Value, base)
 		if verr != nil {
 			problems = append(problems, fmt.Sprintf("Entry key %q with base %d and value %q is invalid: %v", key, base, entry.Value, verr))
+			convertedRoots = append(convertedRoots, big.NewInt(0)) // 👈 put zero instead of skipping
 			continue
 		}
 		convertedRoots = append(convertedRoots, valBig)
